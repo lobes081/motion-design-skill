@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="lib/gsap.min.js"></script>
+    <script src="lib/three.iife.js"></script>
+    <style>
+      /* Drafting-sheet look after the "AI Ship Anatomy" infographic: cream grid paper, navy ink, burnt orange + sage accents. */
+      :root { --paper: #f7f0dd; --card: #fbf6ea; --ink: #1f2a44; --slate: #7388ad; --blue: #b4c6dc; --orange: #d9773c; --otext: #a8501c; --sage: #93b08e;
+        --sans: "Inter", sans-serif; --mono: "JetBrains Mono", monospace; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #f7f0dd; }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: var(--sans); color: var(--ink); }
+      #bg, #ui { position: absolute; inset: 0; }
+      #bg { z-index: 0; background:
+          linear-gradient(rgba(31,42,68,.17) 1.5px, transparent 1.5px) 0 0 / 120px 120px,
+          linear-gradient(90deg, rgba(31,42,68,.17) 1.5px, transparent 1.5px) 0 0 / 120px 120px,
+          linear-gradient(rgba(31,42,68,.07) 1px, transparent 1px) 0 0 / 24px 24px,
+          linear-gradient(90deg, rgba(31,42,68,.07) 1px, transparent 1px) 0 0 / 24px 24px, var(--paper); }
+      #night { position: absolute; inset: 0; background: #17213a; opacity: 0; }
+      #gl, #anno { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+      #gl { z-index: 1; } #anno { z-index: 2; } #ui { z-index: 3; }
+      .mono { font-family: var(--mono); font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+      .frame { position: absolute; inset: 22px; border: 2px solid var(--ink); }
+      .frame::after { content: ""; position: absolute; inset: 7px; border: 1px solid var(--ink); }
+      .ticks { position: absolute; left: 30px; right: 30px; height: 12px; background: repeating-linear-gradient(90deg, var(--ink) 0 1.5px, transparent 1.5px 24px); opacity: .55; }
+      .ticks.t { top: 31px; } .ticks.b { bottom: 31px; }
+      .legend { position: absolute; left: 60px; bottom: 48px; font-size: 17px; display: flex; gap: 22px; align-items: center; }
+      .legend i { display: inline-block; width: 13px; height: 13px; margin-right: 7px; vertical-align: -1px; }
+      #sheet { position: absolute; right: 60px; bottom: 48px; font-size: 17px; }
+
+      .plate { position: absolute; left: 58px; top: 56px; opacity: 0; background: rgba(247,240,221,.9); padding: 12px 22px 16px 16px; border-left: 6px solid var(--ink); }
+      .plate .no { font-size: 22px; color: var(--ink); background: var(--paper); display: inline-block; padding: 2px 8px; border: 2px solid var(--ink); }
+      .plate .nm { font: 900 84px/0.95 var(--sans); letter-spacing: -.03em; margin-top: 8px; }
+      .plate .sub { font-size: 23px; margin-top: 12px; }
+      .plate .sub b { color: var(--otext); }
+
+      #dlg { position: absolute; left: 250px; right: 250px; bottom: 86px; height: 158px; background: var(--card); border: 3px solid var(--ink); box-shadow: 8px 8px 0 rgba(31,42,68,.16); opacity: 0; }
+      #dlg::before, #dlg::after { content: ""; position: absolute; width: 18px; height: 18px; border: 3px solid var(--ink); background: var(--paper); }
+      #dlg::before { left: -12px; top: -12px; } #dlg::after { right: -12px; bottom: -12px; }
+      #dlg-face { position: absolute; left: 18px; top: 16px; width: 122px; height: 122px; border: 2px solid var(--ink); background: var(--paper); overflow: hidden; }
+      #dlg-face canvas { position: absolute; left: 0; top: 0; width: 122px; height: 122px; opacity: 0; }
+      #dlg-name { position: absolute; left: 160px; top: -19px; height: 34px; }
+      #dlg-name span { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 18px; line-height: 30px; padding: 0 12px; background: var(--ink); color: var(--card); border: 2px solid var(--ink); opacity: 0; }
+      #dlg-lines { position: absolute; left: 164px; right: 30px; top: 26px; bottom: 14px; }
+      .ln { position: absolute; inset: 0; font: 600 33px/1.34 var(--sans); letter-spacing: -.005em; opacity: 0; }
+      .ln span { display: inline-block; white-space: pre; }
+
+      .stamp { position: absolute; left: 960px; top: 250px; width: 0; height: 0; opacity: 0; }
+      .stamp > div { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; text-align: center; padding: 14px 30px 16px; border: 6px double var(--orange); color: var(--otext);
+        background: rgba(251,246,234,.93); font: 900 54px/1 var(--sans); letter-spacing: .02em; text-transform: uppercase; }
+      .stamp small { display: block; font: 700 24px/1 var(--mono); margin-top: 10px; letter-spacing: .06em; }
+      .stamp.ok > div { border-color: #6f9a6a; color: #5d8a58; }
+      .stamp.sm > div { font-size: 34px; padding: 10px 20px 11px; }
+
+      .panel { position: absolute; background: var(--card); border: 3px solid var(--ink); box-shadow: 8px 8px 0 rgba(31,42,68,.16); opacity: 0; }
+      .panel h4 { font: 700 22px/1 var(--mono); letter-spacing: .03em; background: var(--ink); color: var(--card); padding: 10px 14px; display: flex; justify-content: space-between; }
+      .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
+      .slot { position: relative; height: 56px; border: 2px dashed rgba(31,42,68,.4); }
+      .item { position: absolute; inset: -2px; border: 2px solid var(--ink); display: flex; align-items: center; padding: 0 10px; font: 700 21px/1 var(--mono); letter-spacing: 0; opacity: 0; white-space: nowrap; }
+      .c-slate { background: var(--blue); } .c-sage { background: #b9cdb5; } .c-orange { background: #ecb48f; } .c-paper { background: #e9dfc6; }
+      .warn { font: 700 20px/1.2 var(--mono); color: var(--card); background: var(--orange); padding: 9px 14px; opacity: 0; }
+      #packC, #packM { left: 1240px; top: 240px; width: 600px; }
+      #packA { left: 60px; top: 330px; width: 470px; } #packS { left: 1300px; top: 70px; width: 560px; }
+      #packS h4 { background: var(--slate); }
+      #manifest { left: 1400px; top: 500px; width: 440px; } #manifest .row { display: flex; justify-content: space-between; padding: 11px 16px; border-top: 2px solid rgba(31,42,68,.2); font: 700 24px/1 var(--mono); opacity: 0; }
+      #steps { left: 1010px; top: 70px; width: 840px; display: flex; } #steps .st { flex: 1; text-align: center; padding: 16px 6px; font: 700 23px/1 var(--mono); border-right: 2px solid var(--ink); }
+      #steps .st:last-child { border-right: 0; }
+      #both { left: 520px; top: 70px; width: 880px; } #both .two { display: flex; } #both .cell { flex: 1; padding: 18px 20px; } #both .cell + .cell { border-left: 3px solid var(--ink); }
+      #both b { display: block; font: 900 40px/1 var(--sans); } #both span { display: block; font: 700 24px/1.2 var(--mono); margin-top: 8px; text-transform: uppercase; }
+      #both .need { text-align: center; font: 900 30px/1 var(--sans); padding: 12px; background: var(--orange); color: var(--card); letter-spacing: .04em; opacity: 0; }
+
+      #tenstrip { position: absolute; left: 190px; right: 190px; top: 84px; display: flex; justify-content: center; gap: 12px; opacity: 0; background: rgba(247,240,221,.93); padding: 14px 0; border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink); }
+      #tenstrip div { width: 132px; padding: 10px 0 12px; text-align: center; border: 3px solid var(--ink); background: var(--card); font: 700 22px/1 var(--mono); }
+      #tenstrip div b { display: block; font: 900 34px/1 var(--sans); margin-bottom: 6px; }
+      #tenstrip div.on { background: #b9cdb5; }
+      #titlecard { position: absolute; left: 0; right: 0; top: 70px; text-align: center; opacity: 0; }
+      #titlecard h1 { font: 900 132px/1 var(--sans); letter-spacing: -.035em; }
+      #titlecard p { font: 400 30px/1 var(--mono); margin-top: 16px; }
+      #titlecard h1, #titlecard p { text-shadow: 3px 3px 0 var(--paper), -3px -3px 0 var(--paper), 3px -3px 0 var(--paper), -3px 3px 0 var(--paper), 0 4px 0 var(--paper), 0 -4px 0 var(--paper); }
+
+      #party { position: absolute; left: 330px; top: 84px; width: 1260px; background: var(--card); border: 3px solid var(--ink); box-shadow: 10px 10px 0 rgba(31,42,68,.16); opacity: 0; }
+      #party h3 { font: 700 22px/1 var(--mono); background: var(--ink); color: var(--card); padding: 13px 20px; display: flex; justify-content: space-between; }
+      #party .row { display: grid; grid-template-columns: 90px 300px 1fr 1fr; align-items: center; height: 68px; border-top: 2px solid rgba(31,42,68,.22); font: 700 26px/1 var(--mono); opacity: 0; }
+      #party .row b { font: 900 34px/1 var(--sans); letter-spacing: -.01em; text-transform: none; } #party .row i { font-style: normal; text-align: center; font: 900 30px/1 var(--sans); }
+      #party .row em { font-style: normal; color: var(--otext); }
+      #quote { position: absolute; left: 180px; right: 180px; top: 300px; text-align: center; }
+      #quote div { font: 900 72px/1.08 var(--sans); letter-spacing: -.025em; opacity: 0; background: rgba(247,240,221,.94); padding: 18px 10px; }
+      #quote div + div { font-size: 50px; font-weight: 700; margin-top: 4px; }
+      #endcard { position: absolute; inset: 0; background: var(--paper); opacity: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+        background-image: linear-gradient(rgba(31,42,68,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(31,42,68,.07) 1px, transparent 1px); background-size: 24px 24px; }
+      #endcard h1 { font: 900 124px/1 var(--sans); letter-spacing: -.035em; } #endcard h2 { font: 400 32px/1 var(--mono); margin: 18px 0 54px; }
+      #endcard p { font: 700 24px/1.7 var(--mono); text-transform: uppercase; letter-spacing: .03em; }
+      #wipe { position: absolute; top: 0; left: 0; width: 2300px; height: 1080px; background: var(--paper); border-left: 6px solid var(--ink); border-right: 6px solid var(--ink); transform: translateX(-2400px);
+        background-image: linear-gradient(rgba(31,42,68,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(31,42,68,.1) 1px, transparent 1px); background-size: 24px 24px; }
+      #flash { position: absolute; inset: 0; background: #fffdf5; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="201.9" data-width="1920" data-height="1080">
+      <div id="bg" class="clip" data-start="0" data-duration="201.9" data-track-index="0"><div id="night"></div></div>
+      <canvas id="gl" class="clip" data-start="0" data-duration="201.9" data-track-index="1" width="1920" height="1080"></canvas>
+      <canvas id="anno" class="clip" data-start="0" data-duration="201.9" data-track-index="2" width="1920" height="1080"></canvas>
+      <div id="ui" class="clip" data-start="0" data-duration="201.9" data-track-index="3" data-track-kind="graphics" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="frame"></div><div class="ticks t"></div><div class="ticks b"></div>
+        <div class="legend mono" data-layout-ignore><span><i style="background:#7388ad"></i>Slate blue: data / context</span><span><i style="background:#d9773c"></i>Burnt orange: action / warning</span><span><i style="background:#93b08e"></i>Sage green: skill / safe</span></div>
+        <div id="sheet" class="mono" data-layout-ignore>AI_SHIP_ANATOMY // SHEET 00</div>
+        <div id="plates"></div>
+        <div id="tenstrip"></div>
+        <div id="titlecard"><h1>AI Ship Anatomy</h1><p>How modern AI agents function under the hood, explained via The Matrix.</p></div>
+
+        <div id="steps" class="panel"><div class="st">01 HERO ASKS</div><div class="st">02 OPERATOR RUNS</div><div class="st">03 RESULT RETURNS</div></div>
+        <div id="packC" class="panel"><h4><span>CONTEXT_WINDOW</span><span class="cnt">0/8</span></h4><div class="slots"></div></div>
+        <div id="packM" class="panel"><h4><span>CONTEXT_WINDOW</span><span class="cnt">5/8</span></h4><div class="slots"></div></div>
+        <div id="packA" class="panel"><h4><span>HERO: CONTEXT</span><span class="cnt">5/8</span></h4><div class="slots"></div><div class="warn">JOB NEEDS 200 SLOTS. PACK HOLDS 8.</div></div>
+        <div id="packS" class="panel"><h4><span>SCOUT: OWN CONTEXT</span><span class="cnt">0/8</span></h4><div class="slots"></div></div>
+        <div id="manifest" class="panel"><h4><span>PLUGIN_MANIFEST</span><span>1 INSTALL</span></h4>
+          <div class="row"><span>SKILL</span><span>x2</span></div><div class="row"><span>MCP_LINK</span><span>x1</span></div><div class="row"><span>AGENT</span><span>x1</span></div><div class="row"><span>HOOK</span><span>x1</span></div></div>
+        <div id="both" class="panel"><div class="two"><div class="cell"><b style="color:#5d8a58">Skill</b><span>Knows how to fly</span></div><div class="cell"><b style="color:#5b6f96">MCP</b><span>The helicopter on the roof</span></div></div><div class="need">BOTH REQUIRED</div></div>
+
+        <div id="st-kungfu" class="stamp" style="left:1420px;top:330px"><div>Skill acquired<small>COMBAT.PROG // KUNG FU</small></div></div>
+        <div id="st-denied" class="stamp sm" style="left:1400px;top:250px"><div>Access denied<small>NO HANDS, NO KEYS</small></div></div>
+        <div id="st-end" class="stamp sm" style="top:210px"><div>Session end<small>WORKING MEMORY CLEARED</small></div></div>
+        <div id="st-new" class="stamp sm ok" style="top:210px"><div>New session<small>JOURNAL LOADED</small></div></div>
+        <div id="st-motion" class="stamp ok" style="left:1400px;top:330px"><div>Skill acquired<small>MOTION-DESIGN // FULL INSTRUCTIONS</small></div></div>
+        <div id="st-done" class="stamp sm ok" style="left:1040px;top:250px"><div>Report received<small>1 SLOT USED, NOT 200</small></div></div>
+        <div id="st-t1" class="stamp sm ok" style="left:1380px;top:300px"><div>Tests pass</div></div>
+        <div id="st-t2" class="stamp sm ok" style="left:1380px;top:300px"><div>Tests pass<small>AUTOMATIC. EVERY TIME.</small></div></div>
+        <div id="st-inst" class="stamp sm ok" style="left:1120px;top:112px"><div>Plugin installed</div></div>
+
+        <div id="party"><h3><span>BILL_OF_PARTS // BUILD ORDER</span><span>10 ITEMS</span></h3><div id="rows"></div></div>
+        <div id="quote"><div>The model only ever reads one long text.</div><div>The other nine parts decide what goes in,<br />and what happens with the answer.</div></div>
+
+        <div id="dlg"><div id="dlg-face"></div><div id="dlg-name" class="mono"></div><div id="dlg-lines"></div></div>
+        <div id="endcard"><h1>AI Ship Anatomy</h1><h2>The ten parts of the ship</h2>
+          <p>Rendered with HyperFrames (HeyGen) + three.js<br />Character cards and sound synthesis after claude-animated-shorts (mromidev, MIT)<br />Voices: Kokoro-82M (Apache 2.0)<br />
+            Music: "Pixelland" by Kevin MacLeod (incompetech.com), licensed under CC BY 4.0</p></div>
+        <div id="wipe"></div><div id="flash"></div>
+      </div>
+      <audio id="mix" class="clip" data-start="0" data-duration="201.9" data-track-index="4" data-volume="1" src="assets/soundtrack.m4a"></audio>
+    </div>
+
+    <script src="js/timing.js"></script>
+    <script src="js/sprites.js"></script>
+    <script src="js/world.js"></script>
+    <script src="js/story.js"></script>
+    <script>
+      // ---------- interface timeline (GSAP): plates, transcript box, stamps, panels, sheet changes
+      (function () {
+        const TM = window.TIMING, C = TM.cues, SC = {}; TM.scenes.forEach((s) => (SC[s.id] = s));
+        const $ = (q) => document.querySelector(q), el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e; };
+        const tl = gsap.timeline({ paused: true });
+        const OUT = "power3.out", IN = "power2.in";
+        function show(target, t0, t1, from) {
+          tl.fromTo(target, Object.assign({ opacity: 0, y: 16 }, from || {}), { opacity: 1, x: 0, y: 0, duration: 0.4, ease: OUT, immediateRender: false }, t0);
+          if (t1 != null) tl.to(target, { opacity: 0, duration: 0.25, ease: IN }, t1 - 0.25);
+        }
+        function stamp(sel, t0, hold) {     // slams onto the sheet, settles, lifts off
+          tl.fromTo(sel, { opacity: 0, scale: 2.1, rotation: -15 }, { opacity: 1, scale: 1, rotation: -6, duration: 0.2, ease: "power3.in", immediateRender: false }, t0 - 0.2);
+          tl.fromTo(sel, { scale: 0.94 }, { scale: 1, duration: 0.3, ease: "back.out(3)", immediateRender: false }, t0);
+          tl.to(sel, { opacity: 0, y: -14, duration: 0.3, ease: IN }, t0 + hold);
+          tl.set(sel, { y: 0 }, t0 + hold + 0.31);
+        }
+        const pop = (target, t0) => tl.fromTo(target, { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2.2)", immediateRender: false }, t0);
+
+        // part plates
+        const PARTS = [["model", "Model", "Neural core", "the thinking"], ["harness", "Harness", "Ship + operator", "a way to act"], ["context", "Context", "Backpack", "room to work"],
+          ["tools", "Tools", "Hands", "actions"], ["memory", "Memory", "Journal", "standing orders"], ["skill", "Skill", "Scroll", "know-how"], ["mcp", "MCP", "Gate", "reach"],
+          ["agent", "Agent", "Scout", "extra hands"], ["hooks", "Hooks", "Alarm bell", "reliability"], ["plugin", "Plugin", "Treasure chest", "one-step setup"]];
+        PARTS.forEach(([id, name, obj, gives], i) => {
+          const p = el("div", "plate", `<div class="no mono">PART_${String(i + 1).padStart(2, "0")} / 10</div><div class="nm">${name}</div><div class="sub mono">${obj} // gives: <b>${gives}</b></div>`);
+          $("#plates").appendChild(p); show(p, SC[id].t0 + 0.4, SC[id].t1 - 0.15, { x: -40, y: 0 });
+          const row = el("div", "row", `<i>${i + 1}</i><b>${name}</b><span>${obj}</span><em>${gives}</em>`); $("#rows").appendChild(row);
+          show(row, C.partyIn + i * 0.16, null, { x: -24, y: 0 });
+          const cell = el("div", i === 5 ? "on" : "", `<b>${i + 1}</b>${i === 5 ? "SKILL" : "?"}`); $("#tenstrip").appendChild(cell);
+        });
+        const il = SC.intro.lines;
+        show("#tenstrip", il[4].t0 - 0.1, SC.intro.t1 - 0.2, { y: -20 });
+        tl.fromTo("#tenstrip div", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2)", stagger: 0.045, immediateRender: false }, il[4].t0);
+        show("#titlecard", SC.title.t0 + 0.3, SC.title.t1 - 0.15, { y: -24 });
+
+        // sheet changes at every cut
+        TM.scenes.forEach((s, i) => { if (i) tl.fromTo("#wipe", { x: -2400 }, { x: 1940, duration: 0.7, ease: "power2.inOut", immediateRender: false }, s.t0 - 0.35); });
+        for (const h of [C.scrollHit, C.skillHit]) { tl.set("#flash", { opacity: 0.8 }, h); tl.to("#flash", { opacity: 0, duration: 0.5, ease: "power2.out" }, h + 0.02); }
+
+        // transcript box: who speaks, typed word by word
+        const NAMES = { N: "NARRATOR", K: "KAI // THE MODEL", O: "OPS // THE HARNESS", S: "SCOUT // THE AGENT" }, WHO = { K: "kai", O: "ops", S: "scout" };
+        const off = document.createElement("canvas"); off.width = 512; off.height = 768;
+        for (const k in NAMES) {
+          const c = el("canvas"); c.width = c.height = 244; c.id = "face-" + k; const g = c.getContext("2d");
+          if (WHO[k]) { off.width = 1024; off.height = 1536; Chibi.draw(off.getContext("2d"), WHO[k], { mouth: "smile" }, 0); g.drawImage(off, 512 - 170, 60, 340, 340, 0, 0, 244, 244); }
+          else { g.fillStyle = "#1f2a44"; g.font = "900 150px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("N", 122, 132); g.strokeStyle = "#1f2a44"; g.lineWidth = 6; g.setLineDash([12, 9]); g.beginPath(); g.arc(122, 122, 98, 0, 7); g.stroke(); }
+          $("#dlg-face").appendChild(c);
+          const n = el("span", "", NAMES[k]); n.id = "name-" + k; $("#dlg-name").appendChild(n);
+        }
+        const lines = []; TM.scenes.forEach((s) => s.lines.forEach((l, i) => lines.push(Object.assign({ last: i === s.lines.length - 1, next: s.lines[i + 1] }, l))));
+        const spans = [];
+        lines.forEach((l) => {
+          const d = el("div", "ln"); l.text.split(" ").forEach((w) => d.appendChild(el("span", "", w + " "))); $("#dlg-lines").appendChild(d);
+          const end = l.next && l.next.t0 - l.t1 < 1.4 ? l.next.t0 - 0.06 : l.t1 + 0.5; l.end = end;
+          tl.set(d, { opacity: 1 }, l.t0 - 0.05); tl.set(d, { opacity: 0 }, end);
+          const ws = d.querySelectorAll("span"), step = Math.min(0.07, ((l.t1 - l.t0) * 0.75) / ws.length);
+          tl.fromTo(ws, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.12, ease: OUT, stagger: step, immediateRender: false }, l.t0 - 0.05);
+          spans.push(...ws);
+          for (const k in NAMES) { tl.set("#face-" + k, { opacity: k === l.who ? 1 : 0 }, l.t0 - 0.06); tl.set("#name-" + k, { opacity: k === l.who ? 1 : 0 }, l.t0 - 0.06); }
+        });
+        gsap.set(spans, { opacity: 0 });
+        let a = null, b = null;
+        const flush = () => { if (a !== null) { tl.fromTo("#dlg", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.3, ease: OUT, immediateRender: false }, a); tl.to("#dlg", { opacity: 0, y: 10, duration: 0.22, ease: IN }, b); } };
+        lines.forEach((l) => { const s = l.t0 - 0.35; if (a === null || s > b + 0.3) { flush(); a = s; } b = l.end; }); flush();
+
+        // stamps
+        stamp("#st-kungfu", C.scrollHit + 0.1, 2.3); stamp("#st-denied", C.bonk + 0.1, 2.2); stamp("#st-end", C.night + 0.8, 2.0); stamp("#st-new", C.journalLoad + 0.1, 2.2);
+        stamp("#st-motion", C.skillHit + 0.1, 2.8); stamp("#st-done", C.reportIn + 0.25, 2.4); stamp("#st-t1", C.tests1, 1.2); stamp("#st-t2", C.tests2, 2.0); stamp("#st-inst", C.lootLand, 2.6);
+
+        // harness loop steps
+        const hs = SC.harness, st = document.querySelectorAll("#steps .st");
+        show("#steps", hs.lines[1].t0 - 0.2, hs.t1 - 0.2, { y: -20 });
+        [[0, C.call], [1, C.run], [2, C.report - 0.3], [0, C.call2], [1, C.run2], [2, C.run2 + 1.0]].forEach(([i, t]) => {
+          tl.to(st[i], { backgroundColor: "#d9773c", color: "#fbf6ea", duration: 0.12, ease: OUT }, t); tl.to(st[i], { backgroundColor: "rgba(217,119,60,0)", color: "#1f2a44", duration: 0.3, ease: IN }, t + 0.85); });
+
+        // backpack panels
+        const ITEMS = [["RULES", "c-paper"], ["JOURNAL", "c-sage"], ["YOUR MESSAGE", "c-paper"], ["SKILL TITLES", "c-sage"], ["FILE", "c-slate"], ["TOOL RESULT", "c-orange"], ["FILE", "c-slate"], ["TOOL RESULT", "c-orange"]];
+        function fill(panel, list) { const box = $(panel + " .slots"), out = []; for (let i = 0; i < 8; i++) { const s = el("div", "slot"); if (list[i]) { const it = el("div", "item " + list[i][1], list[i][0]); s.appendChild(it); out[i] = it; } box.appendChild(s); } return out; }
+        const cs = SC.context, cl = cs.lines, ci = fill("#packC", ITEMS);
+        show("#packC", cs.t0 + 0.7, cs.t1 - 0.2, { x: 40, y: 0 });
+        const drops = [0, 1, 2, 3].map((i) => cl[0].t0 + 2.0 + i * 0.55).concat([0, 1, 2, 3].map((i) => cl[1].t0 + 0.2 + i * 0.6));
+        ci.forEach((it, i) => pop(it, drops[i]));
+        tl.to("#packC h4", { backgroundColor: "#d9773c", duration: 0.15 }, C.packFull); tl.to("#packC h4", { backgroundColor: "#1f2a44", duration: 0.3 }, C.squeeze + 0.6);
+        tl.fromTo("#packC", { x: 0 }, { keyframes: { x: [0, -14, 12, -9, 6, 0] }, duration: 0.45, ease: "none", immediateRender: false }, C.packFull);
+        [2, 3, 4, 5].forEach((i, n) => tl.to(ci[i], { opacity: 0, scale: 0.4, duration: 0.25, ease: IN }, C.squeeze + n * 0.05));
+        const sum = el("div", "item c-paper", "SUMMARY"); sum.style.borderStyle = "double"; sum.style.borderWidth = "5px"; $("#packC .slots").children[2].appendChild(sum); pop(sum, C.squeeze + 0.5);
+
+        const ms = SC.memory, mi = fill("#packM", ITEMS.slice(0, 5));
+        show("#packM", ms.t0 + 0.7, ms.t1 - 0.2, { x: 40, y: 0 });
+        tl.fromTo(mi, { opacity: 0 }, { opacity: 1, duration: 0.2, stagger: 0.05, immediateRender: false }, ms.t0 + 0.8);
+        tl.to(mi, { opacity: 0, scale: 0.5, duration: 0.25, ease: IN, stagger: 0.07 }, C.night + 0.3);
+        const jr = el("div", "item c-sage", "CLAUDE.md"); $("#packM .slots").children[0].appendChild(jr); pop(jr, C.journalLoad);
+
+        const as = SC.agent, al = as.lines, ai = fill("#packA", ITEMS.slice(0, 5));
+        show("#packA", as.t0 + 0.7, as.t1 - 0.2, { x: -40, y: 0 });
+        tl.fromTo(ai, { opacity: 0 }, { opacity: 1, duration: 0.2, stagger: 0.05, immediateRender: false }, as.t0 + 0.8);
+        show("#packA .warn", al[0].t0 + 2.0, C.scoutPop + 0.2, { y: 0 });
+        const rp = el("div", "item c-sage", "REPORT"); $("#packA .slots").children[5].appendChild(rp); pop(rp, C.reportIn);
+        const si = fill("#packS", [["FILE 1-25", "c-slate"], ["RESULT", "c-orange"], ["FILE 26-50", "c-slate"], ["RESULT", "c-orange"], ["FILE 51-100", "c-slate"], ["RESULT", "c-orange"], ["FILE 101-200", "c-slate"], ["RESULT", "c-orange"]]);
+        show("#packS", C.scoutPop + 0.3, C.reportIn + 0.6, { x: 40, y: 0 });
+        si.forEach((it, i) => pop(it, C.scoutGo + 1.2 + i * 0.13));
+
+        show("#manifest", C.loot + 0.5, SC.plugin.t1 - 0.2, { x: 40, y: 0 });
+        tl.fromTo("#manifest .row", { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.3, ease: OUT, stagger: 0.1, immediateRender: false }, C.loot + 0.8);
+        const ml = SC.mcp.lines; show("#both", ml[1].t0 - 0.1, SC.mcp.t1 - 0.2, { y: -24 }); show("#both .need", ml[1].t1 - 1.0, null, { y: 0 });
+
+        // parts list and the closing lines
+        const ps = SC.party, pl = ps.lines;
+        show("#party", ps.t0 + 0.4, null, { y: 30 }); tl.to("#party", { opacity: 0.1, duration: 0.5, ease: "power2.inOut" }, C.quote);
+        const q = document.querySelectorAll("#quote div"); show(q[0], pl[1].t0 - 0.15, null, { y: 26 }); show(q[1], pl[2].t0 - 0.1, null, { y: 26 });
+        tl.to(["#party", q[0], q[1]], { opacity: 0, duration: 0.3, ease: IN }, ps.t1 - 0.4);
+        const ol = SC.outro.lines; tl.fromTo("#endcard", { opacity: 0 }, { opacity: 1, duration: 0.7, ease: "power2.inOut", immediateRender: false }, ol[1].t1 + 1.1);
+
+        // text that depends on time (counters, sheet number): set from the timeline's own clock
+        const cnt = { C: $("#packC .cnt"), M: $("#packM .cnt"), A: $("#packA .cnt"), S: $("#packS .cnt") }, sheet = $("#sheet");
+        const order = TM.scenes.map((s) => s.id);
+        function texts(t) {
+          const nC = t >= C.squeeze + 0.5 ? 5 : drops.filter((d) => t >= d).length; cnt.C.textContent = (t >= C.packFull && t < C.squeeze + 0.5 ? "FULL " : "") + nC + "/8";
+          cnt.M.textContent = (t >= C.journalLoad ? 1 : t >= C.night + 0.6 ? 0 : 5) + "/8"; cnt.A.textContent = (t >= C.reportIn ? 6 : 5) + "/8";
+          cnt.S.textContent = Math.min(8, Math.max(0, Math.floor((t - C.scoutGo - 1.2) / 0.13) + 1)) + "/8";
+          const i = TM.scenes.findIndex((s) => t >= s.t0 && t < s.t1); sheet.textContent = "AI_SHIP_ANATOMY // SHEET " + String(Math.max(0, i) + 1).padStart(2, "0") + " OF " + order.length;
+        }
+        tl.to({}, { duration: TM.dur, ease: "none", onUpdate: () => texts(tl.time()) }, 0);
+        texts(0); Story.renderAt(0);
+        window.__timelines = window.__timelines || {};
+        window.__timelines["main"] = tl;
+      })();
+    </script>
+  </body>
+</html>
