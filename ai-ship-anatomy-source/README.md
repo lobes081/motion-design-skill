@@ -1,6 +1,6 @@
 # AI Ship Anatomy: video source
 
-Source for `ai-ship-anatomy-explainer-2026-11-20.mp4` (3 min 22 s, 1080p, 30 fps).
+Source for `ai-ship-anatomy-explainer-2026-11-20.mp4` (3 min 55 s, 1080p, 30 fps).
 
 The video explains the ten parts of an AI assistant (model, harness, context, tools, memory, skill, MCP, agent, hooks, plugin) as a moving blueprint sheet with three original characters.
 

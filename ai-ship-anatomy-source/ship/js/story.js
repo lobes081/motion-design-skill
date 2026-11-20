@@ -33,13 +33,14 @@
   const mouthOf = (who, t, rest) => (talking(who, t) ? (Math.floor(t * 9) % 2 ? "open" : "smile") : rest || "smile");
 
   // ---------------- drafting annotations (2D overlay)
+  let boxes = [], queue = [];          // label rectangles drawn this frame; item tags waiting to be placed
   function proj(v) { const p = v.clone().project(cam); return [(p.x + 1) * 960, (1 - p.y) * 540]; }
   function label(text, x, y, align, u, color) {
     const n = Math.max(1, Math.round(text.length * clamp(u)));
     const s = text.slice(0, n);
     A.font = '700 25px "JetBrains Mono", "IBM Plex Mono", monospace'; A.textBaseline = "middle"; A.textAlign = align;
     const w = A.measureText(s).width, x0 = align === "left" ? x : align === "right" ? x - w : x - w / 2;
-    A.fillStyle = "rgba(247,240,221,0.9)"; A.fillRect(x0 - 7, y - 18, w + 14, 36);
+    A.fillStyle = "rgba(247,240,221,0.9)"; A.fillRect(x0 - 7, y - 18, w + 14, 36); boxes.push([x0 - 7, y - 18, w + 14, 36]);
     A.fillStyle = color || INK; A.fillText(s, x, y);
   }
   function callout(text, w, dx, dy, u, color) {
@@ -112,8 +113,9 @@
       armR: t >= kl.t0 - 0.2 && t < kl.t1 + 1.2 ? lerp(12, 165, back(seg(t, kl.t0 - 0.2, kl.t0 + 0.15))) : 12,
       armL: t >= kl.t0 - 0.2 && t < kl.t1 + 1.2 ? lerp(12, 70, back(seg(t, kl.t0 - 0.1, kl.t0 + 0.25))) : 12 }));
     who("ops", -4.5, 0.3, idle("ops", t, { look: 0.8, hold: "tablet", armR: 62, armL: t > C.scrollThrow - 0.2 && t < hit ? lerp(12, 150, back(seg(t, C.scrollThrow - 0.2, C.scrollThrow + 0.2))) : 12 }));
-    callout("OPERATOR: LOADS_PROGRAMS", V(-4.5, 3.7, 0.3), -70, -90, cu(t, 4.2, l[1].t0 - 0.1));
-    callout("HERO: RECEIVES_UPLOAD", V(0.6, 3.7, 0.8), 150, -80, cu(t, 4.8, l[1].t0 - 0.1));
+    callout("OPERATOR: LOADS_PROGRAMS", V(-4.9, 3.0, 0.3), -150, -150, cu(t, 4.2, l[1].t0 - 0.1));
+    callout("HERO: RECEIVES_UPLOAD", V(1.0, 3.0, 0.8), 190, -150, cu(t, 4.8, l[1].t0 - 0.1));
+    fixtures();
     callout("COMBAT.PROG", V(-5.4, 4.3, -0.6), -110, -50, cu(t, C.scrollThrow + 0.4, hit - 0.45), ORANGE);
   };
 
@@ -124,6 +126,8 @@
     dim(V(-13.3, -0.7, 4.8), V(13.3, -0.7, 4.8), "HULL_LENGTH: 26.6 M", 46, seg(t, s.t0 + 0.3, s.t0 + 1.2));
     callout("LIFT_ENVELOPE", V(8, 14.5, -1), 170, -10, seg(t, s.t0 + 0.5, s.t0 + 1.3));
     callout("OPERATOR_CONSOLE", V(-6.2, 2.4, -1.2), -190, 60, seg(t, s.t0 + 0.8, s.t0 + 1.6));
+    callout("SKILL_SHELF", V(6.4, 2.6, -3.3), -30, -120, seg(t, s.t0 + 1.1, s.t0 + 1.9));
+    callout("MCP_GATE", V(11.2, 3.3, -0.3), 120, 110, seg(t, s.t0 + 1.4, s.t0 + 2.2));
   };
 
   S.model = (t) => {
@@ -139,7 +143,8 @@
     const io = 1 - seg(t, l[2].t0 - 0.5, l[2].t0 - 0.1);
     flow(kx - 520, ky, kx - 170, ky, "TEXT_IN", Math.min(seg(t, C.textIn, C.textIn + 0.7), io));
     flow(kx + 170, ky, kx + 520, ky, "TEXT_OUT", Math.min(seg(t, C.textOut, C.textOut + 0.7), io), SAGE);
-    callout("NEURAL_CORE: TRAINED_ONCE", V(x, 3.6, 0.8), 170, -90, cu(t, l[0].t0 + 1.4, l[2].t0 - 0.4));
+    callout("NEURAL_CORE: TRAINED_ONCE", V(x + 0.4, 3.0, 0.8), 210, -150, cu(t, l[0].t0 + 1.4, l[2].t0 - 0.4));
+    fixtures(); if (doorIn > 0.9 && t < C.bonk) otag("LOCKED DOOR", V(4.2, 4.45, 0.1), false, "#d9773c");
     callout("DOOR: NO_ACCESS", V(4.2, 4.3, 0.1), 120, -50, cu(t, C.bonk + 0.1, s.t1 - 0.3), ORANGE);
   };
 
@@ -148,14 +153,16 @@
     camSet(iso(-2.0, 1.5, 0.2, lerp(50, 36, sm(seg(t, s.t0, l[1].t0))) - 2 * u, lerp(28, 22, u), lerp(24, 17, sm(seg(t, s.t0, l[1].t0))), 22));
     const kp = V(0.6, 2.5, 0.9), op = V(-4.5, 2.5, 0.4);
     const legs = [[C.call, C.run - 0.25, kp, op], [C.run + 0.35, C.report, op, kp], [C.call2, C.run2 - 0.2, kp, op], [C.run2 + 0.3, C.run2 + 1.3, op, kp]];
-    for (const [a, b, from, to] of legs) if (t >= a && t <= b) { const k = sm(seg(t, a, b)); const p = from.clone().lerp(to, k); place(P.orb, p.x, p.y + Math.sin(k * 3.14) * 1.3, p.z); }
+    legs.forEach(([a, b, from, to], i) => { if (t >= a && t <= b) { const k = sm(seg(t, a, b)); const p = from.clone().lerp(to, k); place(P.orb, p.x, p.y + Math.sin(k * 3.14) * 1.3, p.z);
+      otag(i % 2 ? "RESULT" : "REQUEST", V(p.x, p.y + Math.sin(k * 3.14) * 1.3 + 0.3, p.z), false, "#d9773c"); } });
+    fixtures();
     const press = Math.max(wob(t, C.run, 26, 9), wob(t, C.run2, 26, 9));
     P.console.scale.y = 1 - press * 0.06;
     who("kai", 0.6, 0.8, idle("kai", t, { look: -0.8, armL: Math.abs(t - C.call - 0.15) < 0.3 || Math.abs(t - C.call2 - 0.15) < 0.3 ? 80 : 12 }));
     who("ops", -4.5, 0.3, idle("ops", t, { look: 0.8, hold: "tablet", armR: 62, armL: 12 + 70 * Math.max(0, press) }));
     dim(V(-13.3, -0.7, 4.8), V(13.3, -0.7, 4.8), "HARNESS_FRAME: THE_SHIP", 40, cu(t, l[0].t0 + 1.2, s.t1 - 0.3));
-    callout("OPERATOR: RUNS_THE_LOOP", V(-4.5, 3.7, 0.3), -90, -90, cu(t, l[0].t0 + 3.2, s.t1 - 0.3));
-    callout("HERO: SAYS_WHAT_TO_DO", V(0.6, 3.7, 0.8), 140, -80, cu(t, l[1].t0, l[1].t0 + 4.5));
+    callout("OPERATOR: RUNS_THE_LOOP", V(-4.9, 1.2, 0.6), -170, 150, cu(t, l[0].t0 + 3.2, s.t1 - 0.3));
+    callout("HERO: SAYS_WHAT_TO_DO", V(1.0, 3.0, 0.8), 190, -150, cu(t, l[1].t0, l[1].t0 + 4.5));
   };
 
   const packPulse = (t, times) => 1 + 0.12 * times.reduce((m, x) => m + wob(t, x, 28, 9), 0);
@@ -165,6 +172,7 @@
     const drops = [0, 1, 2, 3].map((i) => l[0].t0 + 2.0 + i * 0.55).concat([0, 1, 2, 3].map((i) => l[1].t0 + 0.2 + i * 0.6));
     place(P.pack, 0.9, 0, 1.0); P.pack.scale.set(1.25, 1.25 * packPulse(t, drops.concat([C.squeeze + 0.5])), 1.25);
     who("kai", -0.9, 0.8, idle("kai", t, { look: t > l[3].t0 ? 0.9 : 0.5, brow: t > C.packFull && t < C.squeeze ? -1 : 0, mouth: t > C.packFull && t < C.squeeze ? "o" : mouthOf("kai", t) }));
+    fixtures(); otag("BACKPACK = CONTEXT", V(0.9, 1.62, 1.0));
     callout("CONTEXT_WINDOW: 8_SLOTS", V(0.9, 1.9, 1.0), 90, 150, cu(t, l[0].t0 + 1.2, l[2].t0 - 0.2));
     callout("NOT_IN_PACK = NOT_KNOWN", V(0.9, 1.9, 1.0), 90, 150, cu(t, l[3].t0, s.t1 - 0.3), ORANGE);
   };
@@ -173,21 +181,23 @@
     const s = SC.tools, l = s.lines, u = seg(t, s.t0, s.t1);
     camSet(iso(1.4, 1.7, 0.4, lerp(35, 32, u), lerp(11, 16, u), 13, 16));
     const tx = [1.4, 3.5, 5.6], cues = [C.tool1, C.tool2, C.tool3], names = ["READ_FILE", "RUN_COMMAND", "SEARCH_WEB"];
-    const rest = [[-1.9, 4.5, 0.9], [-1.0, 4.0, 0.9], [-0.4, 3.3, 0.9]];
+    const rest = [[1.4, 3.5, 0.5], [3.5, 3.8, 0.5], [5.6, 3.5, 0.5]];
     let hitNow = -1;
     P.targets.forEach((m, i) => { place(m, tx[i], 0, 0.3); m.scale.set(1.2, 1.2 * (1 - 0.14 * wob(t, cues[i], 26, 8)), 1.2); });
     P.tools.forEach((m, i) => {
       const inn = back(seg(t, l[0].t0 + 0.6 + i * 0.09, l[0].t0 + 0.95 + i * 0.09));
       const go = eo(seg(t, cues[i] - 0.32, cues[i])), ret = sm(seg(t, cues[i] + 0.25, cues[i] + 0.8)), k = go * (1 - ret);
       const r = rest[i], x = lerp(r[0], tx[i], k), y = lerp(r[1] + Math.sin(t * 2.2 + i) * 0.1, 1.9, k) + Math.sin(k * 3.14) * 0.7;
-      place(m, x, y, lerp(r[2], 0.5, k)); m.scale.setScalar(1.05 * inn); m.rotation.y = 0.4 + Math.sin(t * 1.3 + i) * 0.3; if (i !== 2) m.rotation.z = -0.3 - k * 1.2;
+      place(m, x, y, lerp(r[2], 0.5, k)); m.scale.setScalar(1.05 * inn);
+      if (inn > 0.9) otag(["READ FILE", "RUN COMMAND", "SEARCH WEB"][i], V(x, y + 0.55, lerp(r[2], 0.5, k)), false, "#d9773c");
+      otag(["FILES", "TERMINAL", "WEB"][i], V(tx[i], 0.05, 1.0), true); m.rotation.y = 0.4 + Math.sin(t * 1.3 + i) * 0.3; if (i !== 2) m.rotation.z = -0.3 - k * 1.2;
       if (t >= cues[i] && t < cues[i] + 0.3) hitNow = i;
-      callout(names[i], V(tx[i], 2.0, 0.3), 30 + i * 12, -150 - (i % 2) * 46, cu(t, cues[i] + 0.05, s.t1 - 0.3), i === 1 ? ORANGE : INK);
     });
     if (hitNow >= 0) { const k = seg(t, cues[hitNow], cues[hitNow] + 0.3); place(P.spark, tx[hitNow], 1.7, 0.9); P.spark.scale.setScalar(0.5 + eo(k) * 1.4); P.spark.material.opacity = 1 - k; }
     const act = cues.findIndex((c) => t > c - 0.4 && t < c + 0.3);
-    who("kai", -3.0, 0.8, idle("kai", t, { look: 0.8, armR: act >= 0 ? 150 : 118, armL: 12, brow: 1 }));
-    callout("TOOLS: ONE_ACTION_EACH", V(-1.0, 4.2, 0.9), 110, -70, cu(t, l[0].t0 + 1.4, l[1].t0 - 0.1));
+    who("kai", -2.2, 0.8, idle("kai", t, { look: 0.8, armR: act >= 0 ? 112 : 78, armL: 12, brow: 1 }));
+    fixtures();
+    callout("TOOLS: ONE_ACTION_EACH", V(1.0, 3.6, 0.5), -30, -150, cu(t, l[0].t0 + 1.4, l[1].t0 - 0.1));
   };
 
   S.memory = (t) => {
@@ -203,8 +213,9 @@
     who("kai", 0.4, 0.8, idle("kai", t, { blink: asleep ? 1 : Chibi.blinkAt(t, 0.2), mouth: asleep ? "flat" : mouthOf("kai", t), lean: asleep ? -5 : 0, bob: asleep ? Math.sin(t * 1.2) * 3 : Math.sin(t * 2.3) * 4,
       sq: squash(t, C.journalLoad), look: t > l[2].t0 ? -0.9 : 0 }));
     who("ops", -5.3, 0.2, idle("ops", t, { look: 0.8, hold: "tablet", armR: 62, armL: t > C.journal && t < C.journalLoad ? 130 : 12 }));
+    fixtures(); otag("BACKPACK = CONTEXT", V(2.2, 0.05, 1.7), true); otag("JOURNAL = MEMORY", V(-3.4, 0.05, 2.3), true, "#93b08e");
     callout("SESSION_END: PACK_EMPTIED", V(2.2, 1.9, 1.0), 110, -120, cu(t, C.night + 0.5, C.journal + 0.2), ORANGE);
-    callout("JOURNAL: STAYS_ON_SHIP", V(-3.4, 1.5, 1.6), -40, -190, cu(t, C.journal + 0.2, l[2].t0 - 0.2), SAGE);
+    callout("JOURNAL: STAYS_ON_SHIP", V(-3.4, 1.5, 1.6), 150, -170, cu(t, C.journal + 0.2, l[2].t0 - 0.2), SAGE);
     callout("FILE: CLAUDE.md", V(-3.4, 1.5, 1.6), 150, -150, cu(t, l[2].t0 + 1.0, s.t1 - 0.3), SAGE);
   };
   const nightAt = (t) => (t > SC.memory.t0 && t < SC.memory.t1 ? sm(seg(t, C.night, C.night + 1.0)) * (1 - sm(seg(t, C.journalLoad - 0.2, C.journalLoad + 0.7))) : 0);
@@ -222,15 +233,17 @@
       const p = from.clone().lerp(hov, k).lerp(kpos, into); place(P.scroll, p.x, p.y + Math.sin(k * 3.14) * 0.6 * (1 - into), p.z);
       P.scroll.scale.setScalar(lerp(1, 1.5, k) * (1 - 0.7 * into)); P.scroll.rotation.set(0, 0.17, 0);
       P.paper.visible = t >= C.scrollOpen; P.paper.scale.y = eo(seg(t, C.scrollOpen, C.scrollOpen + 0.5)) || 0.001;
+      if (into < 0.2) otag("SCROLL = SKILL", V(p.x, p.y + 0.5, p.z), false, "#93b08e");
     }
     burst(t, hit, kpos);
     const after = t >= hit;
     who("kai", kx, 0.8, idle("kai", t, { look: after ? 0 : 0.8, glow: after ? 1 - seg(t, hit, hit + 1.0) : 0, sq: squash(t, hit), brow: after ? 1 : 0,
       mouth: after && t < kl.t0 ? "o" : mouthOf("kai", t), armR: t >= kl.t0 - 0.2 && t < kl.t1 + 1 ? lerp(12, 165, back(seg(t, kl.t0 - 0.2, kl.t0 + 0.15))) : picked && !after ? 100 : 12,
       armL: t >= kl.t0 - 0.2 && t < kl.t1 + 1 ? lerp(12, 165, back(seg(t, kl.t0 - 0.1, kl.t0 + 0.25))) : 12 }));
+    otag("SKILL SHELF", SHELF, false, "#93b08e");
     callout("SKILL_SHELF: TITLES_ONLY", V(6.4, 2.6, -3.3), 60, -110, cu(t, l[0].t0 + 2.2, C.scrollPick + 0.3));
     callout("FULL_INSTRUCTIONS", V(5.6, 3.2, 1.1), 110, -60, cu(t, C.scrollOpen + 0.5, hit - 0.3), SAGE);
-    callout("NEURAL_CORE: UNCHANGED", V(kx, 3.6, 0.8), -130, -60, cu(t, l[3].t0 + 2.0, s.t1 - 0.3));
+    callout("NEURAL_CORE: UNCHANGED", V(kx - 0.4, 3.0, 0.8), -190, -130, cu(t, l[3].t0 + 2.0, s.t1 - 0.3));
     callout("CONTEXT: +PAGES_TO_READ", V(kx, 2.2, 0.8), 190, 30, cu(t, l[3].t0 + 3.4, s.t1 - 0.3), SAGE);
   };
 
@@ -246,6 +259,7 @@
       P.isles[i].position.y += 0; P.isles[i].rotation.y = Math.sin(t * 0.6 + i) * 0.05;
     });
     who("kai", 8.2, 1.0, idle("kai", t, { look: 0.9, armR: t > C.gateOpen - 0.3 ? 105 : 12, brow: 1 }));
+    otag("GATE = MCP", V(11.2, 0.05, 0.9), true); P.isles.forEach((m, i) => { if (t > [C.beam1, C.beam2, C.beam3][i]) otag("LINK", from.clone().lerp(m.position, 0.5), false, "#d9773c"); });
     callout("MCP_GATE: STANDARD_PLUG", V(11.2, 3.5, -0.3), -120, -90, cu(t, C.gateOpen + 0.5, s.t1 - 0.3));
     callout("OUTSIDE_SYSTEMS", V(20.5, 1.2, -1), 70, 150, cu(t, C.beam3 + 0.3, s.t1 - 0.3), ORANGE);
   };
@@ -262,9 +276,10 @@
     if (pop > 0) who("scout", sx, 1.0, idle("scout", t, { look: moving ? (ret > 0 ? -1 : 1) : hasReport ? -0.6 : 0.8, mouth: hasReport && !moving ? (talking("scout", t) ? mouthOf("scout", t) : "grin") : mouthOf("scout", t),
       hold: hasReport ? "report" : null, armR: hasReport ? 150 : go > 0 && ret <= 0 && !moving ? 100 : 12, brow: 1, lean: moving ? (ret > 0 ? -7 : 7) : 0 }), { s: pop, y: moving ? Math.abs(Math.sin(t * 14)) * 0.22 : 0 });
     who("kai", -2.5, 0.8, idle("kai", t, { look: 0.8, brow: t < l[1].t0 ? -1 : 0, mouth: t < l[1].t0 - 0.2 && t > l[0].t0 + 2.2 ? "o" : mouthOf("kai", t), armR: t > C.scoutPop && t < C.scoutGo + 0.6 ? 95 : 12 }));
+    fixtures(); otag("BACKPACK = CONTEXT", V(-0.9, 1.62, 1.1));
     callout("JOB: READ_200_FILES", V(5.6, 0.6, 1.0), -40, 150, cu(t, l[0].t0 + 1.6, C.scoutBack - 0.2), ORANGE);
-    callout("SUBAGENT: OWN_BACKPACK", V(sx, 3.5, 1.0), 60, -80, cu(t, C.scoutPop + 0.4, C.scoutGo - 0.1));
-    callout("RETURNS: ONE_REPORT", V(sx, 3.5, 1.0), 110, -80, cu(t, C.scoutBack + 0.1, s.t1 - 0.3), SAGE);
+    callout("SUBAGENT: OWN_BACKPACK", V(sx + 0.3, 0.4, 1.2), 110, 70, cu(t, C.scoutPop + 0.4, C.scoutGo - 0.1));
+    callout("RETURNS: ONE_REPORT", V(sx + 0.3, 0.4, 1.2), 110, 70, cu(t, C.scoutBack + 0.1, s.t1 - 0.3), SAGE);
   };
 
   S.hooks = (t) => {
@@ -280,6 +295,7 @@
     hits.forEach((h, i) => { if (t >= h && t < h + 0.3) { const k = seg(t, h, h + 0.3); place(P.spark, 1.3, 1.35, 1.4); P.spark.scale.setScalar(0.5 + eo(k) * 1.4); P.spark.material.opacity = 1 - k; }
       const w = seg(t, h + 0.05, bells[i]); if (w > 0 && w < 1) { const p = V(1.3, 1.15, 0.9).lerp(V(3.9, 2.2, -0.2), sm(w)); place(P.orb, p.x, p.y + Math.sin(w * 3.14) * 0.3, p.z); } });
     who("kai", -1.4, 0.8, idle("kai", t, { look: 0.8, armR: 70 + up * 80 - sw * 30, brow: sw > 0.5 ? 1 : 0 }));
+    fixtures(); otag("ALARM BELL = HOOK", V(4.9, 2.0, -0.4), true, "#d9773c"); otag("TRIGGER WIRE", V(2.6, 1.9, 0.2), false, "#d9773c"); otag("HAMMER: EDIT", V(hm.position.x, hm.position.y + 0.6, 1.1), false, "#d9773c");
     callout("HOOK: ON_EDIT -> RUN_TESTS", V(3.9, 3.1, -0.4), 60, -90, cu(t, l[0].t0 + 1.6, s.t1 - 0.3), ORANGE);
     callout("EVENT: FILE_EDIT", V(1.3, 1.2, 0.9), -30, 120, cu(t, C.edit1 + 0.1, C.edit2 - 0.4));
   };
@@ -299,6 +315,7 @@
       callout(names[i], V(tx, ty + 0.5, 1.0), (i - 2) * 26, -70 - (i % 2 ? 0 : 34), cu(t, C.loot + 0.8 + i * 0.12, s.t1 - 0.3), i < 2 ? SAGE : i === 4 ? ORANGE : INK);
     });
     who("kai", -2.3, 0.8, idle("kai", t, { look: 0.8, mouth: open > 0 && !talking("kai", t) ? "o" : "smile", armR: open > 0 ? 120 : 12, armL: open > 0 ? 100 : 12, brow: 1 }));
+    fixtures(); otag("CHEST = PLUGIN", V(0.3, 1.0, 1.3), false, "#d9773c");
     callout("PLUGIN: ONE_INSTALL", V(1.6, 1.4, 1.0), 170, -150, cu(t, l[0].t0 + 1.0, C.chestOpen - 0.1));
   };
 
@@ -309,12 +326,60 @@
     camSet(iso(0, 2.0, 0.7, lerp(31, 25, sm(u)), lerp(10, 16, u), 10, 17));
     trio(t, { brow: 1, armR: t >= k.t0 - 0.2 ? lerp(12, 165, back(seg(t, k.t0 - 0.2, k.t0 + 0.15))) : 12, sq: squash(t, k.t0) });
     burst(t, k.t0, V(0.2, 2.6, 1.0));
+    fixtures();
     dim(V(-2.4, 0, 2.2), V(2.5, 0, 2.2), "CREW: MODEL + HARNESS + AGENT", 70, cu(t, l[0].t0 + 1.0, k.t0 - 0.2));
   };
 
+  // name tag that follows each character (drawn last, so it sits on top of the callout dots)
+  const TAGS = { kai: ["KAI", "THE MODEL", "#93b08e"], ops: ["OPS", "THE HARNESS", "#d9773c"], scout: ["SCOUT", "THE AGENT", "#b4c6dc"] };
+  function nameTags(plate) {
+    for (const k in cast) {
+      const c = cast[k]; if (!c.vis || c.s < 0.6) continue;
+      const head = V(c.x, c.y + 3.62 * c.s * (k === "scout" ? 0.93 : 1), c.z);
+      if (cam.position.distanceTo(head) > 57) continue;                 // too small to read in the widest shots
+      const [x, y] = proj(head), [nm, role, col] = TAGS[k];
+      A.font = '700 22px "JetBrains Mono", "IBM Plex Mono", monospace'; A.textBaseline = "middle"; A.textAlign = "left";
+      const w1 = A.measureText(nm).width, w2 = A.measureText(role).width, w = w1 + w2 + 46, h = 34, y0 = Math.round(y - 22 - h);
+      let x0 = Math.round(x - w / 2);
+      if (plate && y0 < 236 && x0 < 650) x0 = 650;                       // keep clear of the part plate (top left)
+      x0 = Math.max(44, Math.min(1876 - w, x0));
+      A.strokeStyle = INK; A.lineWidth = 2; A.beginPath(); A.moveTo(Math.max(x0 + 8, Math.min(x0 + w - 8, x)), y0 + h); A.lineTo(x, y - 4); A.stroke();
+      boxes.push([x0, y0, w, h]);
+      A.fillStyle = PAPER; A.fillRect(x0, y0, w, h); A.fillStyle = INK; A.fillRect(x0, y0, w1 + 22, h);
+      A.strokeRect(x0, y0, w, h);
+      A.fillStyle = col; A.fillRect(x0 + 6, y0 + 6, 5, h - 12);
+      A.fillStyle = PAPER; A.fillText(nm, x0 + 16, y0 + h / 2 + 1); A.fillStyle = INK; A.fillText(role, x0 + w1 + 32, y0 + h / 2 + 1);
+    }
+  }
+
+  // item tag: a light label on a prop. Queued by the scene, placed after callouts and name tags so it avoids them.
+  const otag = (text, w, below, color) => queue.push([text, w, below, color]);
+  const hits = (a, b) => a[0] < b[0] + b[2] + 6 && b[0] < a[0] + a[2] + 6 && a[1] < b[1] + b[3] + 4 && b[1] < a[1] + a[3] + 4;
+  function itemTags(plate) {
+    A.font = '700 23px "JetBrains Mono", "IBM Plex Mono", monospace'; A.textBaseline = "middle"; A.textAlign = "left";
+    for (const [text, w, below, color] of queue) {
+      if (cam.position.distanceTo(w) > 57) continue;
+      const [x, y] = proj(w), tw = A.measureText(text).width + 32, h = 34, dir = below ? 1 : -1;
+      let x0 = Math.max(44, Math.min(1876 - tw, Math.round(x - tw / 2))), y0 = Math.round(below ? y + 18 : y - 18 - h), ok = false;
+      for (let n = 0; n < 5 && !ok; n++) { const r = [x0, y0, tw, h]; ok = !boxes.some((b) => hits(r, b)); if (!ok) y0 += dir * (h + 8); }
+      if (!ok || x < -40 || x > 1960) continue;
+      if (plate && y0 < 236 && x0 < 650) continue;                         // under the part plate
+      if (y0 + h > 826 && x0 + tw > 250 && x0 < 1670) continue;             // under the transcript box
+      if (y0 < 40) continue;
+      boxes.push([x0, y0, tw, h]);
+      A.strokeStyle = INK; A.lineWidth = 1.6; A.setLineDash([4, 4]); A.beginPath(); A.moveTo(x, y); A.lineTo(Math.max(x0 + 8, Math.min(x0 + tw - 8, x)), below ? y0 : y0 + h); A.stroke(); A.setLineDash([]);
+      A.beginPath(); A.arc(x, y, 3.5, 0, 7); A.fillStyle = INK; A.fill();
+      A.fillStyle = "rgba(251,246,234,0.95)"; A.fillRect(x0, y0, tw, h); A.lineWidth = 2; A.strokeRect(x0, y0, tw, h);
+      A.fillStyle = color || "#7388ad"; A.fillRect(x0 + 6, y0 + 6, 5, h - 12);
+      A.fillStyle = INK; A.fillText(text, x0 + 19, y0 + h / 2 + 1);
+    }
+  }
+  const CONSOLE = V(-6.2, 2.75, -1.2), SHELF = V(6.4, 2.65, -3.3);
+  const fixtures = () => { otag("CONSOLE", CONSOLE, false, "#d9773c"); otag("SKILL SHELF", SHELF, false, "#93b08e"); };
+
   function renderAt(t) {
     t = clamp(t, 0, TM.dur - 0.001);
-    A.clearRect(0, 0, 1920, 1080);
+    A.clearRect(0, 0, 1920, 1080); boxes = []; queue = [];
     for (const o of ALL()) o.visible = false;
     for (const k in cast) cast[k].vis = false;
     P.journal.position.set(-3.4, 0, 1.6); P.journal.visible = false;
@@ -322,6 +387,8 @@
     P.beams.forEach((b) => (b.visible = false)); P.chestGlow.visible = false; P.lid.rotation.x = 0;
     const sc = TM.scenes.find((s) => t >= s.t0 && t < s.t1) || TM.scenes[TM.scenes.length - 1];
     S[sc.id](t);
+    const plate = !['intro', 'title', 'party', 'outro'].includes(sc.id);
+    nameTags(plate); itemTags(plate);
     const n = nightAt(t);
     nightEl.style.opacity = (0.8 * n).toFixed(3);
     render(t, n);

@@ -18,7 +18,10 @@ import sfx_gen as G        # noqa: E402
 
 KMODEL, MUSIC, PROJ = sys.argv[1], sys.argv[2], sys.argv[3]
 SR = D.SR
-VOICES = {"N": ("am_michael", 1.0), "K": ("am_puck", 1.0), "O": ("af_heart", 1.0), "S": ("am_liam", 1.08)}
+# speech speed: 1.0 is the voice's normal pace. 0.84 is slower and easier to follow.
+VOICES = {"N": ("am_michael", 0.84), "K": ("am_puck", 0.87), "O": ("af_heart", 0.87), "S": ("am_liam", 0.9)}
+SLOW = 1 / 0.84          # cues timed to a word inside a line move later by the same factor
+GAP = 0.7                # pause between lines, seconds
 SAY = [("CLAUDE.md", "Claude dot M D"), ("MCP", "M C P")]
 
 # (scene id, options, lines).  Line = (speaker, text, options).  gap = pause before the line.
@@ -218,13 +221,13 @@ def main():
         for i, ln in enumerate(lines):
             who, text = ln[0], ln[1]; lo = ln[2] if len(ln) > 2 else {}
             if i > 0 or "gap" in lo:
-                t += lo.get("gap", 0.38)
+                t += lo.get("gap", GAP)
             a = tts(who, text, cache)
             d = len(a) / SR
             placed.append((t, a))
             out.append(dict(who=who, text=text, t0=round(t, 3), t1=round(t + d, 3)))
             t += d
-        t += opt.get("post", 0.7)
+        t += opt.get("post", 0.9)
         scenes.append(dict(id=sid, t0=round(t0, 3), t1=round(t, 3), lines=out))
         index[sid] = out
     dur = round(np.ceil(t * 30) / 30, 3)
@@ -232,7 +235,7 @@ def main():
     cues = {}
     for name, (sid, li, anchor, off, snd, gain) in CUES.items():
         ln = index[sid][li]
-        cues[name] = round((ln["t0"] if anchor == "s" else ln["t1"]) + off, 3)
+        cues[name] = round((ln["t0"] if anchor == "s" else ln["t1"]) + (off * SLOW if anchor == "s" and off > 0 else off), 3)
     # one soft pop when each part's name plate lands
     plates = [(s["t0"] + 0.35) for s in scenes if s["id"] not in ("intro", "title", "party", "outro")]
 
