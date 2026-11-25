@@ -7,8 +7,8 @@ Style: default
 Voice: kokoro:am_michael
 Voice speed: 0.82
 Captions: auto
-Music: synth:cosmic
-Music level: -21
+Music: media/clean-soul.mp3
+Music level: -15
 Sound effects: on
 Max duration: 230
 
