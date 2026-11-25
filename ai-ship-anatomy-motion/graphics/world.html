@@ -86,7 +86,7 @@
         </svg>
 
         <!-- ===== s01 hook: helicopter + pilot program ===== -->
-        <svg id="heli" class="icon" style="left:-560px;top:-250px" width="300" height="170" viewBox="0 0 300 170">
+        <svg id="heli" class="icon" style="left:-600px;top:-200px" width="520" height="295" viewBox="0 0 300 170">
           <g fill="none" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 20 20 L 280 20 M 150 20 L 150 50"/>
             <path d="M 80 70 Q 80 50 110 50 L 190 50 Q 230 50 240 90 L 240 110 Q 240 125 222 125 L 110 125 Q 80 125 80 100 Z"/>
@@ -94,8 +94,8 @@
             <path d="M 185 60 L 225 60 L 232 88 L 185 88 Z" stroke="#7dd3fc"/>
           </g>
         </svg>
-        <div id="heli-q" class="chip" style="left:-560px;top:-90px;--c:#94a3b8">Can't fly yet</div>
-        <div id="cart" class="chip" style="left:-560px;top:-250px;--c:#4ade80">Pilot program</div>
+        <div id="heli-q" class="chip" style="left:-600px;top:20px;--c:#94a3b8">Can't fly yet</div>
+        <div id="cart" class="chip" style="left:-600px;top:-200px;--c:#4ade80">Pilot program</div>
         <div id="hook-k" class="st-kinetic sm cyan" style="left:-330px;top:-470px">Instant expertise?</div>
         <div id="lbl-skill-big" class="st-kinetic lg green" style="left:250px;top:-200px">Skill</div>
         <div id="lbl-same" class="chip" style="left:520px;top:110px;--c:#4ade80">Loads in seconds</div>
@@ -124,7 +124,7 @@
         </div>
         <div id="ctx-full" class="chip" style="left:-1200px;top:-400px;--c:#fb7185">Full</div>
         <div id="ctx-to" class="chip" style="left:-760px;top:-70px;--c:#38bdf8">Model reads this</div>
-        <div id="ctx-rule" class="st-kinetic sm cyan" style="left:-1630px;top:120px;translate:-100% -50%">Not here?<br/>Not known.</div>
+        <div id="ctx-rule" class="st-kinetic sm cyan" style="left:-640px;top:190px;translate:-50% -50%;text-align:center">Not here?<br/>Not known.</div>
 
         <!-- ===== tools ===== -->
         <div id="t1" class="chip" style="left:1055px;top:-230px;--c:#fbbf24">Read file</div>
@@ -167,9 +167,9 @@
         <div id="m1" class="chip" style="left:3150px;top:-620px;--c:#60a5fa;translate:0 -50%">Calendar</div>
         <div id="m2" class="chip" style="left:3150px;top:-300px;--c:#60a5fa;translate:0 -50%">Email</div>
         <div id="m3" class="chip" style="left:3150px;top:20px;--c:#60a5fa;translate:0 -50%">GitHub</div>
-        <div id="cmp-skill" class="chip" style="left:2420px;top:-760px;--c:#4ade80">Skill = how to fly</div>
-        <div id="cmp-mcp" class="chip" style="left:2420px;top:-660px;--c:#60a5fa">MCP = the helicopter</div>
-        <div id="cmp-both" class="st-stamp gold" style="left:2420px;top:-120px;translate:-50% -50%">Need both</div>
+        <div id="cmp-skill" class="chip" style="left:2080px;top:-720px;--c:#4ade80">Skill = how to fly</div>
+        <div id="cmp-mcp" class="chip" style="left:2080px;top:-620px;--c:#60a5fa">MCP = the helicopter</div>
+        <div id="cmp-both" class="st-stamp gold" style="left:2080px;top:-130px;translate:-50% -50%">Need both</div>
 
         <!-- ===== agent ===== -->
         <div id="actx" class="panel" style="left:650px;top:940px;width:380px;height:560px;--c:#38bdf8"><div class="panel-h">Main context</div></div>
@@ -256,17 +256,21 @@
       // ---------- scene times (from the aligned narration)
       const T = {};
       ["s01","s02","s03","s04","s05","s06","s07","s08","s09","s10","s11","s12","s13","s14"].forEach((s) => (T[s] = S(s)));
-      const OVER = { x: 820, y: 260, scale: 0.27 };
+      const OVER = { x: 800, y: 240, scale: 0.29 };
 
       // ---------- s01 hook: helicopter, pilot program loads into the core
-      stage.camInit({ x: -180, y: -150, scale: 1.25 }).mountBackdrop("#backdrop", { preset: "cosmos" });
-      stage.kineticPunch("#hook-k", 0.25, { dur: 0.5 });
-      stage.drawStroke("#heli path", cue("s01", "helicopter", 2.5), 1.0);
-      stage.popIn("#heli-q", cue("s01", "helicopter", 2.6) + 0.6);
+      stage.camInit({ x: -420, y: -180, scale: 1.05 }).mountBackdrop("#backdrop", { preset: "cosmos" });
+      stage.camTo(0.2, { x: -300, y: -150, scale: 1.15, dur: 5.6, ease: "sine.inOut" });
+      stage.kineticPunch("#hook-k", 0.15, { dur: 0.5 });
+      stage.drawStroke("#heli path", 0.6, 1.6);
+      stage.drawStroke(["#core-net path", "#core-dash"], 0.3, 2.2);
+      stage.popIn("#core-net circle", 1.2, { fromScale: 0.2, dur: 0.3 });
+      stage.tl.fromTo("#heli", { rotation: -4 }, { rotation: 3, duration: 1.3, yoyo: true, repeat: 3, ease: "sine.inOut", immediateRender: false }, 0.8);
+      stage.popIn("#heli-q", cue("s01", "helicopter", 2.6) + 0.1);
       stage.fadeOut("#heli-q", cue("s01", "seconds", 3.8) + 0.3, 0.3);
       stage.popIn("#cart", cue("s01", "pilot", 5.0) - 0.2, { fromScale: 0.5 });
       { const t = cue("s01", "loads", 6.0);
-        stage.tl.to("#cart", { x: 560, y: 250, scale: 0.45, duration: 0.7, ease: "power3.in" }, t);
+        stage.tl.to("#cart", { x: 600, y: 200, scale: 0.45, duration: 0.7, ease: "power3.in" }, t);
         stage.tl.to("#cart", { autoAlpha: 0, duration: 0.15 }, t + 0.68);
         stage.tl.fromTo("#core-glow", { scale: 1, transformOrigin: "50% 50%" }, { scale: 1.6, duration: 0.25, yoyo: true, repeat: 1, ease: "power2.out", immediateRender: false }, t + 0.7);
         stage.shake(t + 0.72, 0.4, 12);
@@ -278,9 +282,9 @@
 
       // ---------- s02 pull back to the ten-part map
       stage.fadeOut(["#lbl-skill-big", "#lbl-same"], cue("s02", "ten", 1.5) - 0.3, 0.3);
-      stage.camTo(cue("s02", "ten", 1.6), Object.assign({ dur: 1.8, ease: "power3.inOut" }, OVER));
-      stage.drawStroke("#edges path", cue("s02", "ten", 1.6) + 0.6, 1.1);
-      ["#ctx", "#sess", "#memfile", "#shelf", "#plug", "#actx", "#gate", "#box"].forEach((sel, i) => stage.popIn(sel, cue("s02", "ten", 1.6) + 0.8 + i * 0.04, { fromScale: 0.6 }));
+      stage.camTo(cue("s02", "ten", 1.6) - 0.2, Object.assign({ dur: 1.3, ease: "power3.inOut" }, OVER));
+      stage.drawStroke("#edges path", cue("s02", "ten", 1.6) + 0.2, 1.0);
+      ["#ctx", "#sess", "#memfile", "#shelf", "#plug", "#actx", "#gate", "#box"].forEach((sel, i) => stage.popIn(sel, cue("s02", "ten", 1.6) + 0.3 + i * 0.05, { fromScale: 0.6 }));
 
       // ---------- s03 model
       stage.camTo(T.s03.start - 0.2, { x: 0, y: -80, scale: 1.05, dur: 1.4 });
@@ -352,7 +356,7 @@
 
       // ---------- s08 skill
       stage.camTo(T.s08.start - 0.1, { x: 1250, y: -1010, scale: 1.0, dur: 1.5 });
-      shelfB.forEach((b, i) => stage.popIn(b, cue("s08", "shelf", 3.1) + i * 0.08, { fromScale: 0.7 }));
+      shelfB.forEach((b, i) => stage.popIn(b, T.s08.start + 1.2 + i * 0.12, { fromScale: 0.7 }));
       stage.popIn("#sk-titles", cue("s08", "titles", 4.2));
       { const t = cue("s08", "dashboard", 6.3);
         stage.tl.fromTo("#shelf-b3", { scale: 1 }, { scale: 1.1, duration: 0.25, yoyo: true, repeat: 3, ease: "power2.inOut", immediateRender: false }, t); }
@@ -371,7 +375,7 @@
       flow("#e-mcp", "#93c5fd", 4, cue("s09", "plug", 2.9), T.s10.start, 0.35, 10);
       [["calendar", "#mcp1", "#ic-cal", "#m1"], ["email", "#mcp2", "#ic-mail", "#m2"], ["GitHub", "#mcp3", "#ic-repo", "#m3"]].forEach(([w, p, ic, l], i) => {
         const t = cue("s09", w, 6.6 + i * 0.8);
-        stage.drawStroke(p, t - 0.2, 0.5).popIn(ic, t + 0.2, { fromScale: 0.6 }).popIn(l, t + 0.3);
+        stage.drawStroke(p, t - 0.2, 0.5).popIn(ic, T.s09.start + 1.2 + i * 0.25, { fromScale: 0.6 }).popIn(l, t + 0.3);
         flow(p, "#bfdbfe", 2, t + 0.4, T.s10.start, 0.6, 9);
       });
       stage.popIn("#cmp-skill", cue("s09", "skill", 9.6)).popIn("#cmp-mcp", cue("s09", "helicopter", 13.2) - 0.5);
@@ -398,7 +402,8 @@
 
       // ---------- s11 hooks
       stage.camTo(T.s11.start - 0.1, { x: -1200, y: 920, scale: 1.0, dur: 1.6 });
-      stage.popIn("#gate-lbl", cue("s11", "hooks", 1.0));
+      stage.popIn("#gate-lbl", T.s11.start + 1.0);
+      flow("#hook-track", "#fda4af", 4, T.s11.start + 0.8, T.s12.start, 0.35, 9);
       stage.popIn("#saved", cue("s11", "saved", 4.8) - 0.6, { fromScale: 0.6 });
       { const t = cue("s11", "saved", 4.8);
         stage.tl.to("#saved", { x: 420, duration: 0.8, ease: "power2.inOut" }, t);
@@ -412,7 +417,7 @@
       // ---------- s12 plugin
       stage.camTo(T.s12.start - 0.1, { x: 0, y: 1500, scale: 0.92, dur: 1.6 });
       { const t = cue("s12", "install", 3.4);
-        stage.tl.to("#lid", { y: -70, rotation: -12, duration: 0.45, ease: "back.out(1.6)" }, t);
+        stage.tl.to("#lid", { y: -120, duration: 0.45, ease: "back.out(1.6)" }, t);
         stage.shake(t + 0.1, 0.3, 8); }
       [["dashboard", "#p1", -470, -280], ["calendar", "#p2", 0, -350], ["check", "#p3", 470, -280]].forEach(([w, sel, dx, dy]) => {
         const t = cue("s12", w, 4.6);
@@ -421,6 +426,14 @@
       gsap.set(["#p1", "#p2", "#p3"], { autoAlpha: 0 });
       stage.popIn("#p-box", cue("s12", "box", 11.3));
       stage.fadeOut(["#p1", "#p2", "#p3", "#p-box"], T.s13.start + 0.2, 0.3);
+
+      // ---------- every held station creeps in, so no frame sits still
+      [["s05", { x: -1110, y: -40, scale: 1.0 }], ["s06", { x: 1150, y: -10, scale: 1.0 }], ["s07", { x: -1300, y: -1020, scale: 1.0 }],
+       ["s08", { x: 1250, y: -1010, scale: 1.0 }], ["s09", { x: 2650, y: -330, scale: 0.92 }], ["s10", { x: 1180, y: 820, scale: 0.88 }],
+       ["s11", { x: -1200, y: 920, scale: 1.0 }], ["s12", { x: 0, y: 1500, scale: 0.92 }]].forEach(([sid, pose]) => {
+        const a = T[sid].start + 1.6, b = T[sid].end - 0.4;
+        if (b > a + 1) stage.camTo(a, { scale: pose.scale * 1.07, dur: b - a, ease: "sine.inOut" });
+      });
 
       // ---------- s13 recap: the request travels the whole map
       stage.camTo(T.s13.start, Object.assign({ dur: 1.8 }, OVER));
@@ -438,6 +451,9 @@
 
       // ---------- every frame: pins, packet, flowing dots, core breathing
       const pinEls = PINS.map((p) => [document.getElementById(p[0]), p[0]]);
+      const EDGE = Array.from(document.querySelectorAll("#cam .panel, #cam .chip, #cam .icon, #cam .st-stamp, #cam .st-kinetic, #box"))
+        .filter((el) => !el.closest("#packet") && !el.closest("#pins"))
+        .map((el) => ({ el, x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0, w: el.offsetWidth, h: el.offsetHeight }));
       const packet = $("#packet");
       const reqT0 = cue("s02", "request", 4.0);
       stage.onTick((t, cam) => {
@@ -449,6 +465,16 @@
           el.style.transform = `scale(${(1 / s).toFixed(4)})`;
           el.style.opacity = vis.toFixed(3);
           el.classList.toggle("on", id === active || (t >= reqT0 && t < T.s03.start && id === "p-model"));
+        }
+        // fade whatever the frame edge would cut in half
+        for (const e of EDGE) {
+          let k = 1;
+          if (s > 0.6) {
+            const cx = 960 + (e.x - cam.x) * s, cy = 497 + (e.y - cam.y) * s, hw = e.w * s / 2 + 10, hh = e.h * s / 2 + 10;
+            const out = Math.max(0, hw - cx, cx + hw - 1920, hh - cy, cy + hh - 1080);
+            k = clamp(1 - out / 120, 0.08, 1);
+          }
+          e.el.style.filter = k < 0.999 ? `opacity(${k.toFixed(3)})` : "";
         }
         // request packet: appears in s02, travels the route in s13
         let px = 0, py = -760, pv = 0;
@@ -476,6 +502,7 @@
         $("#core-dash").setAttribute("transform", `rotate(${(t * 12) % 360})`);
         $("#core-glow").setAttribute("r", (300 + Math.sin(t * 1.6) * 18).toFixed(1));
         $("#route").setAttribute("stroke-dashoffset", (-t * 40).toFixed(1));
+        $("#box").style.boxShadow = `0 20px 50px rgba(0,0,0,.6), 0 0 ${(40 + Math.sin(t * 2.2) * 22).toFixed(1)}px rgba(251,191,36,.45)`;
       });
       stage.finalize();
     </script>
