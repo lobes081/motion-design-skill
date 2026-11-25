@@ -205,7 +205,7 @@
         <div id="end4" class="chip" style="left:380px;top:250px;--c:#60a5fa">+ the helicopter</div>
 
         <!-- map pins (constant on-screen size, shown when the camera pulls back) -->
-        <div id="packet"><div class="chip"><span class="dot"></span><span id="packet-t">Make a page that shows my week</span></div></div>
+        <div id="packet" data-layout-allow-overlap><div class="chip" data-layout-allow-overlap><span class="dot"></span><span id="packet-t">Make a page that shows my week</span></div></div>
         <div id="pins"></div>
       </div></div></div>
     </div>
@@ -439,7 +439,7 @@
       stage.camTo(T.s13.start, Object.assign({ dur: 1.8 }, OVER));
       stage.tl.to("#route", { opacity: 0.9, duration: 0.6 }, T.s13.start + 1.2);
       const ROUTE = [
-        [cue("s13", "harness", 2.2), 0, -330, "p-harness"], [cue("s13", "memory", 4.5), -1180, -1000, "p-mem"], [cue("s13", "context", 6.7), -1200, 0, "p-ctx"],
+        [cue("s13", "harness", 2.2), 330, 0, "p-harness"], [cue("s13", "memory", 4.5), -1180, -1000, "p-mem"], [cue("s13", "context", 6.7), -1200, 0, "p-ctx"],
         [cue("s13", "skill", 8.3), 1100, -1000, "p-skill"], [cue("s13", "MCP", 10.4), 2300, -300, "p-mcp"], [cue("s13", "helper", 12.2), 1400, 860, "p-agent"],
         [cue("s13", "tool", 13.4), 1050, 0, "p-tools"], [cue("s13", "hook", 15.5), -1200, 1000, "p-hooks"]];
 
@@ -481,7 +481,7 @@
         if (t >= reqT0 && t < T.s03.start) pv = seg(t, reqT0, reqT0 + 0.4) * (1 - seg(t, T.s03.start - 0.6, T.s03.start - 0.2));
         if (t >= T.s13.start) {
           pv = seg(t, T.s13.start + 0.8, T.s13.start + 1.2) * (1 - seg(t, T.s14.start - 0.4, T.s14.start));
-          const pts = [[T.s13.start + 0.8, 0, -110]].concat(ROUTE.map((r) => [r[0], r[1] + 120, r[2] + 40]));
+          const pts = [[T.s13.start + 0.8, 380, 300]].concat(ROUTE.map((r) => [r[0], r[1] + 120, r[2] + 40]));
           px = pts[0][1]; py = pts[0][2];
           for (let i = 1; i < pts.length; i++) {
             if (t >= pts[i - 1][0]) { const u = sm(seg(t, pts[i - 1][0], Math.max(pts[i - 1][0] + 0.05, pts[i][0]))); px = pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * u; py = pts[i - 1][2] + (pts[i][2] - pts[i - 1][2]) * u; }
