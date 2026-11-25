@@ -5,12 +5,12 @@ Aspect: 16:9
 Audience: general
 Style: default
 Voice: kokoro:am_michael
-Voice speed: 0.9
+Voice speed: 0.82
 Captions: auto
 Music: synth:cosmic
 Music level: -21
 Sound effects: on
-Max duration: 215
+Max duration: 230
 
 ## Narration
 - s01: In The Matrix, Trinity needs to fly a helicopter. Seconds later, a pilot program loads into her head, and she can fly. AI assistants have a part that works the same way. It's called a skill.
@@ -31,20 +31,20 @@ Max duration: 215
 ## Scenes
 | id | start | end | visual | note |
 |---|---|---|---|---|
-| s01 | 0.00 | 14.60 | graphic: graphics/world.html | hook: one upload, a neural core lights up |
-| s02 | 14.60 | 23.13 | graphic: graphics/world.html | pull back to the ten-part map, the request packet appears |
-| s03 | 23.13 | 36.30 | graphic: graphics/world.html | model core: text in, text out, blocked arms |
-| s04 | 36.30 | 50.13 | graphic: graphics/world.html | harness ring wraps the core, loop runs |
-| s05 | 50.13 | 68.63 | graphic: graphics/world.html | context column fills, oldest blocks compress |
-| s06 | 68.63 | 79.53 | graphic: graphics/world.html | three tool arms reach files, terminal, web |
-| s07 | 79.53 | 92.77 | graphic: graphics/world.html | session wipes, memory file reloads |
-| s08 | 92.77 | 111.60 | graphic: graphics/world.html | skill shelf, one skill unrolls into context |
-| s09 | 111.60 | 127.37 | graphic: graphics/world.html | MCP plug routes to calendar, email, GitHub |
-| s10 | 127.37 | 141.57 | graphic: graphics/world.html | helper spawns, fills its own context, returns summary |
-| s11 | 141.57 | 151.77 | graphic: graphics/world.html | save event trips a hook gate, check passes |
-| s12 | 151.77 | 165.20 | graphic: graphics/world.html | plugin box opens, parts fly to their stations |
-| s13 | 165.20 | 182.00 | graphic: graphics/world.html | the request packet retraces the whole map |
-| s14 | 182.00 | 189.13 | graphic: graphics/world.html | close on the core and the skill |
+| s01 | 0.00 | 15.80 | graphic: graphics/world.html | hook: one upload, a neural core lights up |
+| s02 | 15.80 | 25.17 | graphic: graphics/world.html | pull back to the ten-part map, the request packet appears |
+| s03 | 25.17 | 39.57 | graphic: graphics/world.html | model core: text in, text out, blocked arms |
+| s04 | 39.57 | 54.57 | graphic: graphics/world.html | harness ring wraps the core, loop runs |
+| s05 | 54.57 | 74.60 | graphic: graphics/world.html | context column fills, oldest blocks compress |
+| s06 | 74.60 | 86.77 | graphic: graphics/world.html | three tool arms reach files, terminal, web |
+| s07 | 86.77 | 101.30 | graphic: graphics/world.html | session wipes, memory file reloads |
+| s08 | 101.30 | 122.07 | graphic: graphics/world.html | skill shelf, one skill unrolls into context |
+| s09 | 122.07 | 139.33 | graphic: graphics/world.html | MCP plug routes to calendar, email, GitHub |
+| s10 | 139.33 | 155.10 | graphic: graphics/world.html | helper spawns, fills its own context, returns summary |
+| s11 | 155.10 | 166.30 | graphic: graphics/world.html | save event trips a hook gate, check passes |
+| s12 | 166.30 | 180.83 | graphic: graphics/world.html | plugin box opens, parts fly to their stations |
+| s13 | 180.83 | 199.23 | graphic: graphics/world.html | the request packet retraces the whole map |
+| s14 | 199.23 | 206.97 | graphic: graphics/world.html | close on the core and the skill |
 
 ## Sound
 - @s01:loads: riser 0.7
